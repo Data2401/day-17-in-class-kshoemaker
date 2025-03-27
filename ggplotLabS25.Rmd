@@ -26,38 +26,44 @@ This data is the heights of humans, divided by their biological sex.
 Use ggplot to make a histogram of all of the heights:
 
 ```{r}
-
+ggplot(heights, aes(x = height)) + geom_histogram()
 
 ```
 
 Change up the binwidth and see how the plots change. Try 1, 5, 10, and 20
 
 ```{r}
-
+ggplot(heights, aes(x = height)) + geom_histogram(binwidth = 1)
+ggplot(heights, aes(x = height)) + geom_histogram(binwidth = 5)
+ggplot(heights, aes(x = height)) + geom_histogram(binwidth = 10)
+ggplot(heights, aes(x = height)) + geom_histogram(binwidth = 20)
 ```
 
 Smooth this out to an emperical density with `geom_density()`
 
 ```{r}
-
+ggplot(heights, aes(x = height)) + geom_density()
 ```
 
 Use a new argument in the `aes()`, `group =` to split this density by sex
 
 ```{r}
-
+ggplot(heights, aes(x = height, group = sex)) + geom_density()
 ```
 
 OR we can do it with `color` or `fill.` If you say you want to color by sex, R knows that you want a different curve for each of them.
 
 ```{r}
-
+ggplot(heights, aes(x = height, fill = sex)) + geom_density()
 
 ```
 
 If you've used fill, then there is now a slight issue that they are overlapped. We can fix this with alpha transparency!
 
 ```{r}
+ggplot(heights, aes(x = height, fill = sex)) + geom_density(alpha = 0.5)
+
+
 
 
 ```
@@ -66,6 +72,8 @@ Let's make some boxplots of the same information.
 
 ```{r}
 
+ggplot(heights) + geom_boxplot(aes(x = height, y = sex))
+
 ```
 
 ## Quantatitive summaries:  
@@ -73,13 +81,14 @@ Let's make some boxplots of the same information.
 Find the mean and median overall. 
 
 ```{r}
-
+heights %>% summarise(mean_height = mean(height), median_height = median(height))
 ```
 
 Find the mean and median for both groups. 
 
 ```{r}
 
+heights %>% group_by(sex) %>%  summarise(mean_height = mean(height), median_height = median(height))
 
 ```
 
@@ -87,7 +96,7 @@ How tall is the tallest woman? How short is the shortest man?
 
 ```{R}
 
-
+heights %>% group_by(sex) %>% summarise(max(height), min(height))
 ```
 
 ## Presidental Elections Data
@@ -108,7 +117,7 @@ Make a bar graph of the democratic vote by state in 2000.
 
 ```{r}
 
-
+ggplot(votedata %>% filter(year == 2000)) + geom_col(aes(x = state, y = demVote))
 
 ```
 
@@ -118,6 +127,7 @@ Use `coord_flip()` on the previous graph to make it better.
 
 ```{r fig.height=7, fig.width=5}
 
+ggplot(votedata %>% filter(year == 2000)) + geom_col(aes(x = state, y = demVote)) + coord_flip()
 
 
 ```
@@ -129,6 +139,7 @@ Use `x = reorder(x_variable, y_variable)` in `aes()` to order the x variable by 
 
 ```{r}
 
+ggplot(votedata %>% filter(year == 2000)) + geom_col(aes(x = reorder(state, demVote), y = demVote)) + coord_flip()
 
 
 ```
@@ -138,6 +149,7 @@ So, what if I want to see what the north and south states did different?
 start with a facet_wrap using the `south` variable:
 
 ```{r}
+ggplot(votedata %>% filter(year == 2000)) + geom_col(aes(x = reorder(state, demVote), y = demVote)) + coord_flip() + facet_wrap(~ south)
 
 
 ```
@@ -145,21 +157,33 @@ start with a facet_wrap using the `south` variable:
 Okay, that's not great. Lets *color* by south instead.
 
 ```{r}
-
-
+ggplot(votedata %>% filter(year == 2000)) + geom_col(aes(x = reorder(state, demVote), y = demVote, fill = south)) + coord_flip() 
 ```
 
 I'm a good data scientist, so I want my plot to have a name! and my axes to have lables! Use `labs` to add a title, subtitle, and x and y labels.
 
 ```{r, eval = F}
-
+ggplot(votedata %>% filter(year == 2000)) + 
+  geom_col(aes(x = reorder(state, demVote), y = demVote, fill = south)) + 
+  coord_flip() + 
+  labs(title = "Percent Dem Vote by State, in 2000",
+       subtitle = "Colored by State location", 
+       x = "State",
+       y = "% Votes Democratic")
 
 ```
 
 You can move the legend with `theme(legend.position = "bottom")`
 
 ```{r, eval = F}
-
+ggplot(votedata %>% filter(year == 2000)) + 
+  geom_col(aes(x = reorder(state, demVote), y = demVote, fill = south)) + 
+  coord_flip() + 
+  labs(title = "Percent Dem Vote by State, in 2000",
+       subtitle = "Colored by State location", 
+       x = "State",
+       y = "% Votes Democratic") + 
+  theme(legend.position = "bottom")
 
 
 ```
@@ -167,15 +191,33 @@ You can move the legend with `theme(legend.position = "bottom")`
 What else could we facet by? years! Let's filter to year in 2008 and 2016, then facet by years.
 
 ```{r}
+ggplot(votedata %>% filter(year == 2008 | year == 2016)) + 
+  geom_col(aes(x = reorder(state, demVote), y = demVote, fill = south)) + 
+  coord_flip() + 
+  facet_wrap(~ year) + 
+  labs(title = "Percent Dem Vote by State, in 2000",
+       subtitle = "Colored by State location", 
+       x = "State",
+       y = "% Votes Democratic") + 
+  theme(legend.position = "bottom")
 
-
+## this has the issue of having weird sorting things, since each graph is a different ordering! 
 
 ```
 
 We need to know who won! We could add a vertical line at 50 for who got more, to indicate the majority of votes. Adding the layer `geom_hline()` adds a horizontal line. (What do you guess `geom_vline()` would do?)
 
 ```{r}
-
+ggplot(votedata %>% filter(year == 2008 | year == 2016)) + 
+  geom_col(aes(x = reorder(state, demVote), y = demVote, fill = south)) + 
+  coord_flip() + 
+  facet_wrap(~ year) + 
+  labs(title = "Percent Dem Vote by State, in 2000",
+       subtitle = "Colored by State location", 
+       x = "State",
+       y = "% Votes Democratic") + 
+  theme(legend.position = "bottom") + 
+  geom_hline(yintercept = 50)
 
 ```
 
@@ -213,7 +255,10 @@ What if I want a map that shows which of the states are "south"? What do I chang
 
 ```{r}
 
-
+map_plot <-  ggplot(data =  votedata %>% filter(year == 2016), aes(map_id = state)) +
+  geom_map(aes(fill = south), map = states_map)+
+  expand_limits(x = states_map$long, y = states_map$lat)
+map_plot  
 ```
 
 
@@ -224,14 +269,18 @@ I want to know the average democratic vote for N vs S, by year.
 First, find the average democratic votes for the north and the south, every year. You'll need to do a *double* `group_by()` here. You do it in one call of the function.  
 
 ```{r}
-
+votedata %>% group_by(south, year) %>% summarise(mean_dem = mean(demVote))
 
 ```
 
 Then, let's plot that! Pipe the result of your group_by and summarize to ggplot and geom_line(), with year on the x axis and your summarized value on the y axis. Color by the `south` variable. 
 
 ```{r}
-
+votedata %>% 
+  group_by(south, year) %>% 
+  summarise(mean_dem = mean(demVote)) %>% 
+  ggplot(aes(x = year, y = mean_dem, color = south)) + geom_line()
+ 
 
 ```
 
@@ -247,7 +296,7 @@ glimpse(penguins)
 We can use boxplots to visualize the distribution of weight (body_mass_g) within each species:
 
 ```{r}
-
+ggplot(penguins, aes(x = body_mass_g, y = species)) + geom_boxplot()
 
 ```
 
@@ -255,12 +304,14 @@ What if we also want the points? Layering!! Add a geom_point to your existing bo
 
 ```{r}
 
+ggplot(penguins, aes(x = body_mass_g, y = species)) + geom_boxplot() + geom_point()
 
 ```
 
 But, these are all stacked up... to actually see them, use "geom_jitter" instead of points
 
 ```{r}
+ggplot(penguins, aes(x = body_mass_g, y = species)) + geom_boxplot() + geom_jitter()
 
 
 ```
@@ -269,6 +320,7 @@ How to get the boxplots on top? The layers are plotted in the order you give the
 
 ```{r}
 
+ggplot(penguins, aes(x = body_mass_g, y = species))  + geom_jitter() + geom_boxplot(alpha = 0.5)
 
 
 ```
@@ -277,6 +329,7 @@ Maybe let's try replacing the boxplot with a `geom_violin()`?
 
 ```{r}
 
+ggplot(penguins, aes(x = body_mass_g, y = species))  + geom_jitter() + geom_violin(alpha = 0.5)
 
 
 ```
